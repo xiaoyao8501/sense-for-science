@@ -1,3 +1,8 @@
+<p align="center">
+  <img src="logo.png" width="200" alt="Sense for Science Logo">
+</p>
+
+
 Phase 1: Foundation (地基阶段)
 [x] 建立 GitHub 仓库与网页托管 (Done!)
 
