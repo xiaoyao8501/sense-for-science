@@ -49,23 +49,52 @@
         </ul>
     </nav>
 
-    <main id="app">
-        <div class="card">
-            <h1>Sense for Science</h1>
-            <p>欢迎来到实验室！我们已经成功装载了数学引擎。</p>
-            
-            <div class="math-demo">
-                $$ \int_{a}^{b} f(x)dx = F(b) - F(a) $$
-            </div>
-            
-            <p>上面的公式如果看起来很漂亮，说明我们的“显微镜”安装成功了！</p>
+<main id="app">
+    <div class="card">
+        <h1>交互式数学实验：圆的面积</h1>
+        <p>拖动滑块，观察公式和图形的变化：</p>
+        
+        <input type="range" id="radius-slider" min="10" max="100" value="50" style="width: 100%;">
+        
+        <div id="math-output" class="math-demo">
+            $$ r = 50, \text{Area} \approx 7853 $$
         </div>
 
-        <div class="card" style="border-left: 4px solid #f2cc60;">
-            <h3>🛠️ 下一步任务</h3>
-            <p>我们要在这一块黑色的“主舞台”上，画出第一条会动的几何线段。</p>
+        <div style="text-align: center;">
+            <canvas id="geometry-canvas" width="300" height="300" style="background: #111; border-radius: 8px;"></canvas>
         </div>
-    </main>
+    </div>
+</main>
+
+<script>
+    const slider = document.getElementById('radius-slider');
+    const mathOutput = document.getElementById('math-output');
+    const canvas = document.getElementById('geometry-canvas');
+    const ctx = canvas.getContext('2d');
+
+    function update() {
+        const r = slider.value;
+        const area = (Math.PI * r * r).toFixed(0);
+        
+        // 更新公式内容
+        mathOutput.innerHTML = `$$ r = ${r}, \\text{Area} \\approx ${area} $$`;
+        // 重新触发 KaTeX 渲染
+        renderMathInElement(mathOutput);
+
+        // 重新画圆
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.beginPath();
+        ctx.arc(150, 150, r, 0, Math.PI * 2);
+        ctx.strokeStyle = '#58a6ff';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(88, 166, 255, 0.2)';
+        ctx.fill();
+    }
+
+    slider.oninput = update;
+    window.onload = update; // 初始加载
+</script>
 
     <script>
         // 页面加载完后自动寻找 $$ 并渲染
