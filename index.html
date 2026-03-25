@@ -5,47 +5,73 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sense for Science | 科学直觉实验室</title>
     <link rel="icon" type="image/png" href="favicon.png">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex-autoload.min.js"></script>
+
     <style>
+        :root {
+            --primary-blue: #0077cc;
+            --bg-dark: #0b0e14; /* 尝试一点 3B1B 的深色质感 */
+        }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 40px 20px;
-            background-color: #f4f7f9;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0; display: flex; height: 100vh;
+            background-color: var(--bg-dark); color: white;
         }
-        .container {
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        /* 侧边栏：以后这里放菜单 */
+        nav {
+            width: 250px; background: #161b22;
+            padding: 20px; border-right: 1px solid #30363d;
         }
-        .logo-container { text-align: center; margin-bottom: 30px; }
-        .logo { width: 120px; border-radius: 50%; transition: transform 0.3s; }
-        .logo:hover { transform: scale(1.1); } /* 交互动画：鼠标悬停Logo会放大 */
-        h1 { color: #0077cc; text-align: center; }
-        .roadmap { background: #eef9ff; padding: 20px; border-left: 5px solid #0077cc; }
-        .done { text-decoration: line-through; color: #888; }
+        /* 主舞台：内容显示区域 */
+        main {
+            flex: 1; padding: 40px; overflow-y: auto;
+        }
+        .card {
+            background: #1c2128; border: 1px solid #30363d;
+            border-radius: 12px; padding: 30px; margin-bottom: 20px;
+        }
+        .logo-small { width: 50px; border-radius: 50%; vertical-align: middle; }
+        .math-demo { color: #58a6ff; font-size: 1.5em; text-align: center; margin: 20px 0; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo-container">
-            <img src="logo.png" alt="Logo" class="logo">
+
+    <nav>
+        <img src="logo.png" class="logo-small">
+        <h3>实验项目</h3>
+        <ul style="list-style: none; padding: 0;">
+            <li style="color: var(--primary-blue);">📍 首页介绍</li>
+            <li style="color: #888;">🔒 线性代数 (开发中)</li>
+            <li style="color: #888;">🔒 经典力学 (开发中)</li>
+        </ul>
+    </nav>
+
+    <main id="app">
+        <div class="card">
+            <h1>Sense for Science</h1>
+            <p>欢迎来到实验室！我们已经成功装载了数学引擎。</p>
+            
+            <div class="math-demo">
+                $$ \int_{a}^{b} f(x)dx = F(b) - F(a) $$
+            </div>
+            
+            <p>上面的公式如果看起来很漂亮，说明我们的“显微镜”安装成功了！</p>
         </div>
-        <h1>Sense for Science</h1>
-        <p>A visual playground for kids to grasp the underlying logic of mathematics, physics, and chemistry.</p>
-        
-        <div class="roadmap">
-            <h3>🚀 项目路线图 (Roadmap)</h3>
-            <ul>
-                <li class="done">建立 GitHub 仓库与网页托管 (Done!)</li>
-                <li>集成 LaTeX 数学公式渲染引擎</li>
-                <li>确定第一版视觉风格</li>
-                <li><b>Next:</b> 线性代数空间变换动画</li>
-            </ul>
+
+        <div class="card" style="border-left: 4px solid #f2cc60;">
+            <h3>🛠️ 下一步任务</h3>
+            <p>我们要在这一块黑色的“主舞台”上，画出第一条会动的几何线段。</p>
         </div>
-    </div>
+    </main>
+
+    <script>
+        // 页面加载完后自动寻找 $$ 并渲染
+        window.onload = function() {
+            renderMathInElement(document.body);
+        };
+    </script>
 </body>
 </html>
