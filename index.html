@@ -2,105 +2,71 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sense for Science | 科学直觉实验室</title>
-    <link rel="icon" type="image/png" href="favicon.png">
+    <title>Sense for Science | 实验室控制台</title>
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex-autoload.min.js"></script>
 
-    <style>
-        :root {
-            --primary-blue: #0077cc;
-            --bg-dark: #0b0e14; /* 尝试一点 3B1B 的深色质感 */
-        }
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            margin: 0; display: flex; height: 100vh;
-            background-color: var(--bg-dark); color: white;
-        }
-        /* 侧边栏：以后这里放菜单 */
-        nav {
-            width: 250px; background: #161b22;
-            padding: 20px; border-right: 1px solid #30363d;
-        }
-        /* 主舞台：内容显示区域 */
-        main {
-            flex: 1; padding: 40px; overflow-y: auto;
-        }
-        .card {
-            background: #1c2128; border: 1px solid #30363d;
-            border-radius: 12px; padding: 30px; margin-bottom: 20px;
-        }
-        .logo-small { width: 50px; border-radius: 50%; vertical-align: middle; }
-        .math-demo { color: #58a6ff; font-size: 1.5em; text-align: center; margin: 20px 0; }
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script> <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.158.0/three.min.js"></script> <script src="https://cdn.jsdelivr.net/npm/roughjs@4.5.2/dist/rough.umd.js"></script> <script src="https://cdn.jsdelivr.net/npm/tweakpane@3.1.9/dist/tweakpane.min.js"></script> <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script> <style>
+        /* 这里保持之前的深色实验室风格 */
+        :root { --primary: #58a6ff; --bg: #0d1117; }
+        body { background: var(--bg); color: white; margin: 0; font-family: sans-serif; display: flex; }
+        #sidebar { width: 200px; border-right: 1px solid #30363d; height: 100vh; padding: 20px; }
+        #canvas-container { flex: 1; position: relative; overflow: hidden; }
+        .tp-dfwv { top: 20px !important; right: 20px !important; } /* 定位 Tweakpane */
     </style>
 </head>
 <body>
-
-    <nav>
-        <img src="logo.png" class="logo-small">
-        <h3>实验项目</h3>
-        <ul style="list-style: none; padding: 0;">
-            <li style="color: var(--primary-blue);">📍 首页介绍</li>
-            <li style="color: #888;">🔒 线性代数 (开发中)</li>
-            <li style="color: #888;">🔒 经典力学 (开发中)</li>
-        </ul>
+    <nav id="sidebar">
+        <img src="logo.png" style="width: 40px;">
+        <h4>实验列表</h4>
+        <small style="color: #8b949e;">当前模式：几何 + 物理模拟</small>
     </nav>
 
-<main id="app">
-    <div class="card">
-        <h1>交互式数学实验：圆的面积</h1>
-        <p>拖动滑块，观察公式和图形的变化：</p>
-        
-        <input type="range" id="radius-slider" min="10" max="100" value="50" style="width: 100%;">
-        
-        <div id="math-output" class="math-demo">
-            $$ r = 50, \text{Area} \approx 7853 $$
+    <div id="canvas-container">
+        <div id="math-overlay" style="position: absolute; top: 20px; left: 20px; z-index: 10;">
+            $$ f(x) = \sin(x) \cdot e^{-x} $$
         </div>
-
-        <div style="text-align: center;">
-            <canvas id="geometry-canvas" width="300" height="300" style="background: #111; border-radius: 8px;"></canvas>
         </div>
-    </div>
-</main>
-
-<script>
-    const slider = document.getElementById('radius-slider');
-    const mathOutput = document.getElementById('math-output');
-    const canvas = document.getElementById('geometry-canvas');
-    const ctx = canvas.getContext('2d');
-
-    function update() {
-        const r = slider.value;
-        const area = (Math.PI * r * r).toFixed(0);
-        
-        // 更新公式内容
-        mathOutput.innerHTML = `$$ r = ${r}, \\text{Area} \\approx ${area} $$`;
-        // 重新触发 KaTeX 渲染
-        renderMathInElement(mathOutput);
-
-        // 重新画圆
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.beginPath();
-        ctx.arc(150, 150, r, 0, Math.PI * 2);
-        ctx.strokeStyle = '#58a6ff';
-        ctx.lineWidth = 3;
-        ctx.stroke();
-        ctx.fillStyle = 'rgba(88, 166, 255, 0.2)';
-        ctx.fill();
-    }
-
-    slider.oninput = update;
-    window.onload = update; // 初始加载
-</script>
 
     <script>
-        // 页面加载完后自动寻找 $$ 并渲染
-        window.onload = function() {
-            renderMathInElement(document.body);
-        };
+        // --- 初始化 Tweakpane (互动面板) ---
+        const pane = new Tweakpane.Pane({ title: '参数调节' });
+        const params = { speed: 1.0, size: 50, color: '#58a6ff' };
+        
+        pane.addInput(params, 'speed', { min: 0, max: 5 });
+        pane.addInput(params, 'size', { min: 10, max: 100 });
+        pane.addInput(params, 'color');
+
+        // --- 初始化 GSAP (丝滑动画示例) ---
+        // 比如让某个元素入场时有 3B1B 那种平滑感
+        gsap.from("#math-overlay", { duration: 1.5, y: -50, opacity: 0, ease: "power4.out" });
+
+        // --- 初始化 Rough.js (手绘几何) ---
+        const container = document.getElementById('canvas-container');
+        const canvas = document.createElement('canvas');
+        canvas.width = window.innerWidth - 200;
+        canvas.height = window.innerHeight;
+        container.appendChild(canvas);
+        const rc = rough.canvas(canvas);
+
+        function draw() {
+            // 清除画布逻辑略...
+            rc.circle(200, 200, params.size, {
+                fill: params.color,
+                fillStyle: 'hachure', // 阴影线填充
+                stroke: 'white'
+            });
+        }
+        
+        // 监听面板变化并重绘
+        pane.on('change', () => {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            draw();
+        });
+
+        window.onload = draw;
     </script>
 </body>
-</html>
