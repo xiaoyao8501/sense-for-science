@@ -1,72 +1,68 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Sense for Science | 实验室控制台</title>
-    
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex-autoload.min.js"></script>
+  <meta charset="utf-8">
+  <title>MathBox 3D 实验室 | Sense for Science</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  
+  <script src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathbox@0.1.11/build/mathbox-bundle.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mathbox@0.1.11/build/mathbox.css">
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script> <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.158.0/three.min.js"></script> <script src="https://cdn.jsdelivr.net/npm/roughjs@4.5.2/dist/rough.umd.js"></script> <script src="https://cdn.jsdelivr.net/npm/tweakpane@3.1.9/dist/tweakpane.min.js"></script> <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script> <style>
-        /* 这里保持之前的深色实验室风格 */
-        :root { --primary: #58a6ff; --bg: #0d1117; }
-        body { background: var(--bg); color: white; margin: 0; font-family: sans-serif; display: flex; }
-        #sidebar { width: 200px; border-right: 1px solid #30363d; height: 100vh; padding: 20px; }
-        #canvas-container { flex: 1; position: relative; overflow: hidden; }
-        .tp-dfwv { top: 20px !important; right: 20px !important; } /* 定位 Tweakpane */
-    </style>
+  <style>
+    body { margin: 0; background: #0b0e14; overflow: hidden; }
+    #info {
+      position: absolute; top: 20px; left: 20px;
+      color: #58a6ff; font-family: sans-serif;
+      z-index: 10; pointer-events: none;
+    }
+  </style>
 </head>
 <body>
-    <nav id="sidebar">
-        <img src="logo.png" style="width: 40px;">
-        <h4>实验列表</h4>
-        <small style="color: #8b949e;">当前模式：几何 + 物理模拟</small>
-    </nav>
+  <div id="info">
+    <h1>MathBox 3D 测试</h1>
+    <p>鼠标左键旋转 | 右键平移 | 滚轮缩放</p>
+  </div>
 
-    <div id="canvas-container">
-        <div id="math-overlay" style="position: absolute; top: 20px; left: 20px; z-index: 10;">
-            $$ f(x) = \sin(x) \cdot e^{-x} $$
-        </div>
-        </div>
+  <script>
+    // 1. 初始化 MathBox
+    var mathbox = mathBox({
+      plugins: ['core', 'controls', 'cursor', 'mathbox'],
+      controls: { klass: THREE.OrbitControls }
+    });
+    var three = mathbox.three;
+    three.renderer.setClearColor(new THREE.Color(0x0b0e14), 1.0);
 
-    <script>
-        // --- 初始化 Tweakpane (互动面板) ---
-        const pane = new Tweakpane.Pane({ title: '参数调节' });
-        const params = { speed: 1.0, size: 50, color: '#58a6ff' };
-        
-        pane.addInput(params, 'speed', { min: 0, max: 5 });
-        pane.addInput(params, 'size', { min: 10, max: 100 });
-        pane.addInput(params, 'color');
+    // 2. 设置视角 (Camera)
+    var view = mathbox.setFocus(3).cartesian({
+      range: [[-2, 2], [-1, 1], [-1, 1]],
+      scale: [2, 1, 1],
+    });
 
-        // --- 初始化 GSAP (丝滑动画示例) ---
-        // 比如让某个元素入场时有 3B1B 那种平滑感
-        gsap.from("#math-overlay", { duration: 1.5, y: -50, opacity: 0, ease: "power4.out" });
+    // 3. 画坐标轴 (Axes)
+    view.axis({ axis: 1, width: 3, color: '#ff6666' }); // X轴
+    view.axis({ axis: 2, width: 3, color: '#66ff66' }); // Y轴
+    view.grid({ width: 1, divideX: 20, divideY: 10, opacity: 0.25 });
 
-        // --- 初始化 Rough.js (手绘几何) ---
-        const container = document.getElementById('canvas-container');
-        const canvas = document.createElement('canvas');
-        canvas.width = window.innerWidth - 200;
-        canvas.height = window.innerHeight;
-        container.appendChild(canvas);
-        const rc = rough.canvas(canvas);
+    // 4. 创建动态数据源 (像 3B1B 一样的函数曲线)
+    view.interval({
+      id: 'sampler',
+      width: 64,
+      channels: 2,
+      expr: function (emit, x, i, t) {
+        // y = sin(x + 时间)
+        emit(x, Math.sin(x + t));
+      },
+    });
 
-        function draw() {
-            // 清除画布逻辑略...
-            rc.circle(200, 200, params.size, {
-                fill: params.color,
-                fillStyle: 'hachure', // 阴影线填充
-                stroke: 'white'
-            });
-        }
-        
-        // 监听面板变化并重绘
-        pane.on('change', () => {
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            draw();
-        });
+    // 5. 将数据渲染成线 (Curve)
+    view.line({
+      points: '#sampler',
+      color: '#58a6ff',
+      width: 5,
+      stroke: 'dotted'
+    });
 
-        window.onload = draw;
-    </script>
+  </script>
 </body>
+</html>
