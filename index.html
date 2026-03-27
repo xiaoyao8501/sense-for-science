@@ -1,91 +1,44 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <style>
-        body { margin: 0; background: #05070a; overflow: hidden; color: #58a6ff; font-family: sans-serif; }
-        #ui { position: absolute; top: 30px; left: 30px; pointer-events: none; }
-    </style>
-</head>
-<body>
-    <div id="ui">
-        <h1 style="font-size: 32px; margin: 0; color: #f2cc60;">感知：万有引力</h1>
-        <p id="status" style="opacity: 0.8; font-family: monospace;">$F = G \frac{m_1 m_2}{r^2}$</p>
-        <p style="font-size: 14px; color: #888;">靠近中心，感受“引力线”的紧绷与震颤</p>
-    </div>
-    <canvas id="cvs"></canvas>
+// 基于 MathBox 的“手绘感”数轴初探
+var mathbox = mathBox({
+  plugins: ['core', 'controls', 'cursor', 'mathbox'],
+  controls: { klass: THREE.OrbitControls }
+});
+var three = mathbox.three;
+three.renderer.setClearColor(new THREE.Color(0x05070a), 1.0);
 
-    <script>
-        const canvas = document.getElementById('cvs');
-        const ctx = canvas.getContext('2d');
-        const status = document.getElementById('status');
-        let w, h;
-        let mouse = { x: -100, y: -100 };
+var view = mathbox.cartesian({
+  range: [[-5, 5], [-1, 1]],
+  scale: [2, 1],
+});
 
-        function resize() {
-            w = canvas.width = window.innerWidth;
-            h = canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resize);
-        window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
-        resize();
+// 1. 画数轴（带有一点点 3B1B 的优雅青蓝色）
+view.axis({
+  axis: 1,
+  width: 4,
+  color: '#58a6ff',
+});
 
-        function draw() {
-            // 保持残影，营造空间深邃感
-            ctx.fillStyle = 'rgba(5, 7, 10, 0.15)';
-            ctx.fillRect(0, 0, w, h);
+// 2. 动态刻度 (让刻度随时间微颤，模拟手绘感)
+view.interval({
+  width: 11, // 从 -5 到 5 共 11 个点
+  expr: function (emit, x, i, t) {
+    // 给 Y 轴坐标加一点点随机抖动
+    var wobble = Math.sin(t * 2 + i) * 0.02;
+    emit(x, wobble);
+  },
+  channels: 2,
+});
 
-            const sunX = w / 2;
-            const sunY = h / 2;
+view.ticks({
+  width: 3,
+  size: 15,
+  color: '#ffffff',
+});
 
-            // 1. 计算距离 r
-            const dx = mouse.x - sunX;
-            const dy = mouse.y - sunY;
-            const r = Math.sqrt(dx*dx + dy*dy);
-            
-            // 2. 模拟引力强度 (反比于距离)
-            // 距离越小，force越大
-            const force = Math.max(0, (400 - r) / 400); 
-
-            // 3. 画“引力束缚线”
-            ctx.beginPath();
-            ctx.moveTo(sunX, sunY);
-            
-            // 引力越强，线条抖动越剧烈（挣扎感）
-            const wobble = force * 40; 
-            const midX = (sunX + mouse.x) / 2 + (Math.random() - 0.5) * wobble;
-            const midY = (sunY + mouse.y) / 2 + (Math.random() - 0.5) * wobble;
-            
-            ctx.quadraticCurveTo(midX, midY, mouse.x, mouse.y);
-            
-            // 引力越强，颜色越亮，线条越粗
-            ctx.strokeStyle = `rgb(${100 + force*155}, ${150 + force*105}, 255)`;
-            ctx.lineWidth = 1 + force * 5;
-            ctx.stroke();
-
-            // 4. 画“太阳”
-            ctx.beginPath();
-            ctx.arc(sunX, sunY, 8, 0, Math.PI*2);
-            ctx.fillStyle = '#f2cc60';
-            ctx.shadowBlur = 20;
-            ctx.shadowColor = '#f2cc60';
-            ctx.fill();
-            ctx.shadowBlur = 0; // 重置阴影
-
-            // 5. 画“行星”（你的鼠标）
-            ctx.beginPath();
-            const pulse = 10 + force * 10 + Math.sin(Date.now()*0.01)*2;
-            ctx.arc(mouse.x, mouse.y, pulse, 0, Math.PI*2);
-            ctx.strokeStyle = '#fff';
-            ctx.stroke();
-
-            // 更新数据展示
-            status.innerText = `距离 r: ${Math.round(r)} | 感知引力 F: ${(force * 100).toFixed(1)}%`;
-
-            requestAnimationFrame(draw);
-        }
-
-        draw();
-    </script>
-</body>
-</html>
+// 3. 加上数字标注 (KaTeX 风格)
+// MathBox 强大的地方在于可以直接把文字挂载到坐标上
+// 这里我们先用简单的点代替，后续教你挂载 KaTeX
+view.point({
+  color: '#f2cc60',
+  size: 10,
+});
