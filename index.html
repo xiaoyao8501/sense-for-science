@@ -1,68 +1,63 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>MathBox 3D 实验室 | Sense for Science</title>
-  <link rel="icon" type="image/png" href="favicon.png">
-  
-  <script src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mathbox@0.1.11/build/mathbox-bundle.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mathbox@0.1.11/build/mathbox.css">
-
-  <style>
-    body { margin: 0; background: #0b0e14; overflow: hidden; }
-    #info {
-      position: absolute; top: 20px; left: 20px;
-      color: #58a6ff; font-family: sans-serif;
-      z-index: 10; pointer-events: none;
-    }
-  </style>
+    <script src="https://cdn.jsdelivr.net/npm/roughjs@4.5.2/dist/rough.umd.js"></script>
+    <style>
+        body { margin: 0; background: #0b0e14; display: flex; justify-content: center; align-items: center; height: 100vh; color: #58a6ff; font-family: 'Segoe UI', sans-serif; }
+        canvas { cursor: crosshair; }
+        #label { position: absolute; top: 20px; text-align: center; pointer-events: none; }
+    </style>
 </head>
 <body>
-  <div id="info">
-    <h1>MathBox 3D 测试</h1>
-    <p>鼠标左键旋转 | 右键平移 | 滚轮缩放</p>
-  </div>
+    <div id="label">
+        <h1>感知：力的交互</h1>
+        <p>移动鼠标，感受线条的“呼吸”</p>
+    </div>
+    <canvas id="canvas"></canvas>
 
-  <script>
-    // 1. 初始化 MathBox
-    var mathbox = mathBox({
-      plugins: ['core', 'controls', 'cursor', 'mathbox'],
-      controls: { klass: THREE.OrbitControls }
-    });
-    var three = mathbox.three;
-    three.renderer.setClearColor(new THREE.Color(0x0b0e14), 1.0);
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-    // 2. 设置视角 (Camera)
-    var view = mathbox.setFocus(3).cartesian({
-      range: [[-2, 2], [-1, 1], [-1, 1]],
-      scale: [2, 1, 1],
-    });
+        const rc = rough.canvas(canvas);
+        let mouse = { x: canvas.width/2, y: canvas.height/2 };
 
-    // 3. 画坐标轴 (Axes)
-    view.axis({ axis: 1, width: 3, color: '#ff6666' }); // X轴
-    view.axis({ axis: 2, width: 3, color: '#66ff66' }); // Y轴
-    view.grid({ width: 1, divideX: 20, divideY: 10, opacity: 0.25 });
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
 
-    // 4. 创建动态数据源 (像 3B1B 一样的函数曲线)
-    view.interval({
-      id: 'sampler',
-      width: 64,
-      channels: 2,
-      expr: function (emit, x, i, t) {
-        // y = sin(x + 时间)
-        emit(x, Math.sin(x + t));
-      },
-    });
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 画一个手绘感的矩形作为背景参考
+            rc.rectangle(canvas.width/2 - 150, canvas.height/2 - 150, 300, 300, {
+                roughness: 1.5,
+                stroke: '#161b22',
+                strokeWidth: 2
+            });
 
-    // 5. 将数据渲染成线 (Curve)
-    view.line({
-      points: '#sampler',
-      color: '#58a6ff',
-      width: 5,
-      stroke: 'dotted'
-    });
+            // 画一个连接鼠标与中心的“引力线”
+            rc.line(canvas.width/2, canvas.height/2, mouse.x, mouse.y, {
+                roughness: 2.5,
+                stroke: '#58a6ff',
+                bowing: 6 // 让线有一点弧度，像被拉弯的弓
+            });
 
-  </script>
+            // 画一个跟随鼠标的手绘圆
+            rc.circle(mouse.x, mouse.y, 80, {
+                fill: "rgba(88, 166, 255, 0.2)",
+                fillStyle: 'zigzag', // 锯齿状填充，更有手绘感
+                roughness: 2,
+                stroke: '#fff'
+            });
+
+            requestAnimationFrame(draw);
+        }
+
+        draw();
+    </script>
 </body>
 </html>
